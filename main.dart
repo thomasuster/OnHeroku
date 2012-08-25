@@ -23,9 +23,10 @@ main() {
       'Dart on Heroku': true,
       'Buildpack URL': 'https://github.com/igrigorik/heroku-buildpack-dart',
       'Environment': Platform.environment,
-      'Hello': 'Intertubes'
+      'Hello': 'Intertubes',
+      'Thomas': "was here"
     });
-    resp.concat("Thoams was her.:");
+    
 
     response.headers.set(HttpHeaders.CONTENT_TYPE, 'application/json');
     response.outputStream.writeString(resp);

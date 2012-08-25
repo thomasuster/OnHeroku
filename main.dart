@@ -25,6 +25,7 @@ main() {
       'Environment': Platform.environment,
       'Hello': 'Intertubes'
     });
+    resp.concat("Thoams was her.:");
 
     response.headers.set(HttpHeaders.CONTENT_TYPE, 'application/json');
     response.outputStream.writeString(resp);

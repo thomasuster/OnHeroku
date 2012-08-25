@@ -1,1 +1,1 @@
-web: dart OnHeroku.dart
+web: dart main.dart

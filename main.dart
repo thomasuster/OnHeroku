@@ -2,6 +2,8 @@
 #import('dart:json');
 #import("../mongo-dart/lib/mongo.dart");
 #import('dart:math');
+//#import('dart:html'); 
+#import('src/puremvc.dart');
 
 main() {
   var server = new HttpServer();
@@ -34,6 +36,10 @@ main() {
     db.close();
   }); 
   
+  List<String> someMoreDataFromMVC = getDataFromMVC();
+  //print(someMoreDataFromMVC[0]);
+  //print(someMoreDataFromMVC[1]);
+
   server.defaultRequestHandler = (HttpRequest request, HttpResponse response) {
     
     var resp = JSON.stringify({
@@ -43,11 +49,35 @@ main() {
       'Hello': 'Intertubes',
       'Thomas': "was here",
       'Victor':'was here too... and so was your mom. :D',
-	  'Prashant':'Hell Yeah!!!'
+	  'Prashant':'Hell Yeah!!!',
+	  'Data1': someMoreDataFromMVC[0],
+	  'Data2': someMoreDataFromMVC[1]
     });
     
     response.headers.set(HttpHeaders.CONTENT_TYPE, 'application/json');
     response.outputStream.writeString(resp);
     response.outputStream.close();
   };
+}
+
+List<String> getDataFromMVC()
+{
+  String data1 = "StupidData1";
+  String data2 = "StupidData2";
+  //Generate data
+  List<String> dataObject = new List<String>();
+  dataObject.add(data1);
+  dataObject.add(data2);
+  //Create Facade
+  IFacade facade = MVCFacade.getInstance("TestFacade");
+  //Create a proxy to hold the Data
+  IProxy proxy = new MVCProxy("TestProxy", dataObject);
+  //Register the proxy
+  facade.registerProxy(proxy);
+  //Retireve proxy
+  IProxy retirevedProxy = facade.retrieveProxy("TestProxy");
+  //Get Data
+  List<String> retirevedDataObject = retirevedProxy.getData();
+  
+  return retirevedDataObject;
 }

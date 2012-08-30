@@ -21,6 +21,7 @@ main() {
   server.listen('0.0.0.0', port);
   print('Server started on port: ${port}');
 
+  //MongoDart Hello world
   //ServerConfig serverConfig = new ServerConfig("mongodb://tuTest:d2ui12d81273hg1p387gd@ds037467.mongolab.com", 37467); //This doesn't work yet
   ServerConfig serverConfig = new ServerConfig("ds037467.mongolab.com", 37467);
   Db db = new Db("heroku_app7026785", serverConfig);
@@ -36,12 +37,15 @@ main() {
     db.close();
   }); 
   
+  
+  //PureMVC
   List<String> someMoreDataFromMVC = getDataFromMVC();
   //print(someMoreDataFromMVC[0]);
   //print(someMoreDataFromMVC[1]);
-
+  
+  
+  //Json response from original tutorial
   server.defaultRequestHandler = (HttpRequest request, HttpResponse response) {
-    
     var resp = JSON.stringify({
       'Dart on Heroku': true,
       'Buildpack URL': 'https://github.com/igrigorik/heroku-buildpack-dart',
@@ -53,7 +57,6 @@ main() {
 	  'Data1': someMoreDataFromMVC[0],
 	  'Data2': someMoreDataFromMVC[1]
     });
-    
     response.headers.set(HttpHeaders.CONTENT_TYPE, 'application/json');
     response.outputStream.writeString(resp);
     response.outputStream.close();

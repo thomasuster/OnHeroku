@@ -1,49 +1,84 @@
 #import('dart:io');
 #import('dart:json');
-#import("../mongo-dart/lib/mongo.dart");
+//#import("../mongo-dart/lib/mongo.dart");
 #import('dart:math');
-//#import('dart:html'); 
+//#import('dart:html');
 #import('src/puremvc.dart');
+#import('lib/sqljocky.dart');
+
 
 main() {
   var server = new HttpServer();
-  
+
   int port;
   try
   {
-    port = parseInt(Platform.environment['PORT']);  
+    port = parseInt(Platform.environment['PORT']);
   }
   catch(final error)
   {
     port = 0;
   }
-  
+
   server.listen('0.0.0.0', port);
   print('Server started on port: ${port}');
 
   //MongoDart Hello world
   //ServerConfig serverConfig = new ServerConfig("mongodb://tuTest:d2ui12d81273hg1p387gd@ds037467.mongolab.com", 37467); //This doesn't work yet
-  ServerConfig serverConfig = new ServerConfig("ds037467.mongolab.com", 37467);
-  Db db = new Db("heroku_app7026785", serverConfig);
-  print("Connecting to ${db.serverConfig.host}:${db.serverConfig.port}");
-  db.open().chain((o){
-    print("Connected!");
-    DbCollection usersCollection = db.collection("users");
-    return usersCollection.find().each((user){
-      print("[${user['name']}]:[${user['password']}]:[user_id: ${user['user_id']}]");
-      user.forEach((key,value) => print("$key -> $value"));
-    });
-  }).then((dummy){
-    db.close();
-  }); 
-  
-  
+//  ServerConfig serverConfig = new ServerConfig("ds037467.mongolab.com", 37467);
+//  Db db = new Db("heroku_app7026785", serverConfig);
+//  print("Connecting to ${db.serverConfig.host}:${db.serverConfig.port}");
+//  db.open().chain((o){
+//    print("Connected!");
+//    DbCollection usersCollection = db.collection("users");
+//    return usersCollection.find().each((user){
+//      print("[${user['name']}]:[${user['password']}]:[user_id: ${user['user_id']}]");
+//      user.forEach((key,value) => print("$key -> $value"));
+//    });
+//  }).then((dummy){
+//    db.close();
+//  });
+
+
   //PureMVC
   List<String> someMoreDataFromMVC = getDataFromMVC();
   //print(someMoreDataFromMVC[0]);
   //print(someMoreDataFromMVC[1]);
-  
-  
+
+
+  //OMG WTF BBQ SQLJOCKY TEST!!!
+  Log.initialize();
+  Log log = new Log("##### SQLJockey");
+
+  String user = 'app7026785';
+  String password = 'dip4life';
+  int dbport = 16735;
+  String db = 'test';
+  String host = 'instance25510.db.xeround.com';
+
+  log.debug("Starting SQLJocky Test...");
+  Connection cnx = new Connection();
+  log.debug("Connecting...");
+  cnx.connect(host, dbport, user, password, db).onComplete((Future future) {
+      log.debug("Connection Complete!");
+      if  (future.hasValue){
+//        log.debug("Creating Table...");
+//        cnx.query("create table testTable (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, data VARCHAR(100));").then((Results results) {
+//          log.debug(results.toString());
+//        });
+        var rng = new Random();
+
+        String rNumber = rng.nextInt(100).toString();
+        String testData = "THISISATEST$rNumber";
+
+        log.debug("Inserting Row..."); //This doesn't run because it fires simultaneously
+        cnx.query("INSERT INTO testTable (data) VALUES ('$testData');").then((Results results) {
+          log.debug(results.toString());
+        });
+
+      }
+  });
+
   //Json response from original tutorial
   server.defaultRequestHandler = (HttpRequest request, HttpResponse response) {
     var resp = JSON.stringify({
@@ -81,6 +116,6 @@ List<String> getDataFromMVC()
   IProxy retirevedProxy = facade.retrieveProxy("TestProxy");
   //Get Data
   List<String> retirevedDataObject = retirevedProxy.getData();
-  
+
   return retirevedDataObject;
 }

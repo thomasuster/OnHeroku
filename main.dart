@@ -46,7 +46,7 @@ main() {
   //print(someMoreDataFromMVC[1]);
 
 
-  //OMG WTF BBQ SQLJOCKY TEST!!!
+  //OMG WTF BBQ SQLJOCKY TEST!!! //poop
   Log.initialize();
   Log log = new Log("##### SQLJockey");
 
@@ -59,9 +59,11 @@ main() {
   log.debug("Starting SQLJocky Test...");
   Connection cnx = new Connection();
   log.debug("Connecting...");
-  cnx.connect(host, dbport, user, password, db).onComplete((Future future) {
+  
+  Future future = cnx.connect(host, dbport, user, password, db);
+  future.then((value) {
       log.debug("Connection Complete!");
-      if  (future.hasValue){
+      if  (future.hasValue) {
 //        log.debug("Creating Table...");
 //        cnx.query("create table testTable (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, data VARCHAR(100));").then((Results results) {
 //          log.debug(results.toString());

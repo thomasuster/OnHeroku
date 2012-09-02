@@ -86,7 +86,7 @@ main() {
     var resp = JSON.stringify({
       'Dart on Heroku': true,
       'Buildpack URL': 'https://github.com/igrigorik/heroku-buildpack-dart',
-      'Environment': Platform.environment,
+      //'Environment': Platform.environment
       'Hello': 'Intertubes',
       'Thomas': "was here",
       'Victor':'was here too... and so was your mom. :D',

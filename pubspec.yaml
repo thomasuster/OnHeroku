@@ -1,0 +1,9 @@
+#Totally doesn't work, pub currently sucks
+name: on_heroku
+dependencies:
+  dart-uuid:
+    git: git://github.com/Daegalus/dart-uuid.git
+  sqljocky:
+    git: git://github.com/jamesots/sqljocky.git
+  puremvc-dart-multicore-framework:
+    git: git://github.com/PureMVC/puremvc-dart-multicore-framework.git

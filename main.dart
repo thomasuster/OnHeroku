@@ -1,86 +1,62 @@
 #import('dart:io');
 #import('dart:json');
-//#import("../mongo-dart/lib/mongo.dart");
 #import('dart:math');
-//#import('dart:html');
-#import('src/puremvc.dart');
-#import('lib/sqljocky.dart');
 
+#import('package:dart-uuid/Uuid.dart');
+#import('package:logging/logging.dart');
+#import('package:puremvc-dart-multicore-framework/src/puremvc.dart');
+#import('package:sqljocky/sqljocky.dart');
+
+Logger log;
 
 main() {
   var server = new HttpServer();
-
   int port;
   try
   {
     port = parseInt(Platform.environment['PORT']);
   }
-  catch(final error)
+  catch(error)
   {
     port = 0;
   }
-
   server.listen('0.0.0.0', port);
   print('Server started on port: ${port}');
-
-  //MongoDart Hello world
-  //ServerConfig serverConfig = new ServerConfig("mongodb://tuTest:d2ui12d81273hg1p387gd@ds037467.mongolab.com", 37467); //This doesn't work yet
-//  ServerConfig serverConfig = new ServerConfig("ds037467.mongolab.com", 37467);
-//  Db db = new Db("heroku_app7026785", serverConfig);
-//  print("Connecting to ${db.serverConfig.host}:${db.serverConfig.port}");
-//  db.open().chain((o){
-//    print("Connected!");
-//    DbCollection usersCollection = db.collection("users");
-//    return usersCollection.find().each((user){
-//      print("[${user['name']}]:[${user['password']}]:[user_id: ${user['user_id']}]");
-//      user.forEach((key,value) => print("$key -> $value"));
-//    });
-//  }).then((dummy){
-//    db.close();
-//  });
-
+  
 
   //PureMVC
-  List<String> someMoreDataFromMVC = getDataFromMVC();
+//  List<String> someMoreDataFromMVC = getDataFromMVC();
   //print(someMoreDataFromMVC[0]);
   //print(someMoreDataFromMVC[1]);
-
-
+  
+  
   //OMG WTF BBQ SQLJOCKY TEST!!! //poop
-  Log.initialize();
-  Log log = new Log("##### SQLJockey");
+  //Log.initialize();
+  log = new Logger("##### SQLJockey");
+  
 
   String user = 'app7026785';
   String password = 'dip4life';
-  int dbport = 16735;
-  String db = 'test';
-  String host = 'instance25510.db.xeround.com';
+  //int dbport = 16735;
+  int dbport = 3306;
+  String db = 'onheroku';
+  //String host = 'instance25510.db.xeround.com';
+  String host = 'localhost';
 
-  log.debug("Starting SQLJocky Test...");
+  log.info("Starting SQLJocky Test...");
   Connection cnx = new Connection();
-  log.debug("Connecting...");
+  log.info("Connecting...");
   
-  Future future = cnx.connect(host, dbport, user, password, db);
-  future.then((value) {
-      log.debug("Connection Complete!");
-      if  (future.hasValue) {
-//        log.debug("Creating Table...");
-//        cnx.query("create table testTable (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, data VARCHAR(100));").then((Results results) {
-//          log.debug(results.toString());
-//        });
-        var rng = new Random();
+  try {
+    Future future = cnx.connect(host, dbport, user, password, db);
+   //Gotta catch em all, Pokemon! //This is to protect against hung SQL DB connections :X
+    doSQLWork(future, cnx);
+  }
+  catch (e) {
+    cnx.close(); 
+  }
 
-        String rNumber = rng.nextInt(100).toString();
-        String testData = "THISISATEST$rNumber";
-
-        log.debug("Inserting Row..."); //This doesn't run because it fires simultaneously
-        cnx.query("INSERT INTO testTable (data) VALUES ('$testData');").then((Results results) {
-          log.debug(results.toString());
-        });
-
-      }
-  });
-
+  return;
   //Json response from original tutorial
   server.defaultRequestHandler = (HttpRequest request, HttpResponse response) {
     var resp = JSON.stringify({
@@ -91,13 +67,66 @@ main() {
       'Thomas': "was here",
       'Victor':'was here too... and so was your mom. :D',
 	  'Prashant':'Hell Yeah!!!',
-	  'Data1': someMoreDataFromMVC[0],
-	  'Data2': someMoreDataFromMVC[1]
+//	  'Data1': someMoreDataFromMVC[0],
+//	  'Data2': someMoreDataFromMVC[1]
     });
     response.headers.set(HttpHeaders.CONTENT_TYPE, 'application/json');
     response.outputStream.writeString(resp);
     response.outputStream.close();
   };
+}
+
+doSQLWork(Future future, Connection connection)
+{
+  future.handleException( (e) {
+    print("WTF! $e");
+    //connection.close();
+  });
+  
+  future.chain((value) {
+    print("Connection Complete!");
+    
+    if  (future.hasValue) {
+    
+    }
+    //        log.debug("Creating Table...");
+    //        cnx.query("create table testTable (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, data VARCHAR(100));").then((Results results) {
+    //          log.debug(results.toString());
+    //        });
+    var rng = new Random();
+    
+    String rNumber = rng.nextInt(100).toString();
+    String testData = "THISISATEST$rNumber";
+    
+    var uuid = new Uuid();
+    var uuidString = uuid.v1();
+    print(uuidString);
+    log.info("Inserting Row..."); //This doesn't run because it fires simultaneously
+    Future<Results> futureResults = connection.query("INSERT INTO testtable (id, data) VALUES ('$uuidString', '$testData')"); 
+    return futureResults;
+    
+  }).chain( (value) {
+    
+    print("GOT HERE!!!");
+    Future<Results> futureResults = connection.query("SELECT * FROM testTable;");
+    
+    return futureResults;
+  }).then((Results value){
+    
+    print("The values are...");
+    var iterator = value.iterator();
+    while(iterator.hasNext())
+    {
+      List row  = iterator.next();
+      for (var value in row)
+      {
+        print(value);  
+      }
+      
+    }
+    connection.close();
+  });
+  
 }
 
 List<String> getDataFromMVC()

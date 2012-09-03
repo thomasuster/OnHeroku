@@ -83,23 +83,22 @@ doSQLWork(Future future, Connection connection)
     //connection.close();
   });
   
+  var uuidString;
+  
   future.chain((value) {
+    
     print("Connection Complete!");
-    
     if  (future.hasValue) {
-    
     }
     //        log.debug("Creating Table...");
     //        cnx.query("create table testTable (id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, data VARCHAR(100));").then((Results results) {
     //          log.debug(results.toString());
     //        });
     var rng = new Random();
-    
     String rNumber = rng.nextInt(100).toString();
     String testData = "THISISATEST$rNumber";
-    
     var uuid = new Uuid();
-    var uuidString = uuid.v1();
+    uuidString = uuid.v1();
     print(uuidString);
     log.info("Inserting Row..."); //This doesn't run because it fires simultaneously
     Future<Results> futureResults = connection.query("INSERT INTO testtable (id, data) VALUES ('$uuidString', '$testData')"); 
@@ -109,9 +108,9 @@ doSQLWork(Future future, Connection connection)
     
     print("GOT HERE!!!");
     Future<Results> futureResults = connection.query("SELECT * FROM testTable;");
-    
     return futureResults;
-  }).then((Results value){
+    
+  }).transform((value){
     
     print("The values are...");
     var iterator = value.iterator();
@@ -122,11 +121,20 @@ doSQLWork(Future future, Connection connection)
       {
         print(value);  
       }
-      
     }
+    return value;
+    
+  }).chain((value){
+    
+    print("DELETE FROM testTable WHERE id='$uuidString'");
+    Future<Results> futureResults = connection.query("DELETE FROM testTable WHERE id='$uuidString'");
+    return futureResults;
+    
+  }).then((value){
+    
+    print("Success! Closing connection.");
     connection.close();
   });
-  
 }
 
 List<String> getDataFromMVC()

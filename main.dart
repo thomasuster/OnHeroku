@@ -7,7 +7,11 @@
 #import('package:puremvc-dart-multicore-framework/src/puremvc.dart');
 #import('package:sqljocky/sqljocky.dart');
 
+#source("UsersProxy.dart");
+
 Logger log;
+
+var multitonKey = "TestFacade";
 
 main() {
   var server = new HttpServer();
@@ -25,9 +29,9 @@ main() {
   
 
   //PureMVC
-//  List<String> someMoreDataFromMVC = getDataFromMVC();
-  //print(someMoreDataFromMVC[0]);
-  //print(someMoreDataFromMVC[1]);
+  List<String> someMoreDataFromMVC = getDataFromMVC();
+  print("someMoreDataFromMVC[0] = ${someMoreDataFromMVC[0]}");
+  print("someMoreDataFromMVC[1] = ${someMoreDataFromMVC[1]}");
   
   
   //OMG WTF BBQ SQLJOCKY TEST!!! //poop
@@ -43,9 +47,9 @@ main() {
   //String host = 'instance25510.db.xeround.com';
   String host = 'localhost';
 
-  log.info("Starting SQLJocky Test...");
+  //print("Starting SQLJocky Test...");
   Connection cnx = new Connection();
-  log.info("Connecting...");
+  print("Connecting...");
   
   try {
     Future future = cnx.connect(host, dbport, user, password, db);
@@ -53,6 +57,7 @@ main() {
     doSQLWork(future, cnx);
   }
   catch (e) {
+    print("Error: $e");
     cnx.close(); 
   }
 
@@ -79,8 +84,8 @@ main() {
 doSQLWork(Future future, Connection connection)
 {
   future.handleException( (e) {
-    print("WTF! $e");
-    //connection.close();
+    print("Connection failed, Is the WAMP Server on?: $e");
+    return false;
   });
   
   var uuidString;
@@ -106,23 +111,26 @@ doSQLWork(Future future, Connection connection)
     
   }).chain( (value) {
     
-    print("GOT HERE!!!");
-    Future<Results> futureResults = connection.query("SELECT * FROM testTable;");
-    return futureResults;
+    //Let's use a proxy for shits and giggles
+    UsersProxy proxy = new UsersProxy(connection);
     
-  }).transform((value){
+    IFacade facade = MVCFacade.getInstance(multitonKey);
+    
+    //Register the proxy
+    facade.registerProxy(proxy);
+    
+    Future<List<User>> futureList = proxy.getUsers();
+    return futureList;
+    
+  }).transform((List<User> userList){
     
     print("The values are...");
-    var iterator = value.iterator();
-    while(iterator.hasNext())
-    {
-      List row  = iterator.next();
-      for (var value in row)
-      {
-        print(value);  
-      }
-    }
-    return value;
+    
+    userList.forEach((User user) {
+      print("User ${user.uuid}, ${user.data}");
+    });
+    
+    return userList;
     
   }).chain((value){
     
@@ -135,22 +143,27 @@ doSQLWork(Future future, Connection connection)
     print("Success! Closing connection.");
     connection.close();
   });
+  
 }
 
 List<String> getDataFromMVC()
 {
   String data1 = "StupidData1";
   String data2 = "StupidData2";
+  
   //Generate data
   List<String> dataObject = new List<String>();
   dataObject.add(data1);
   dataObject.add(data2);
+  
   //Create Facade
-  IFacade facade = MVCFacade.getInstance("TestFacade");
+  IFacade facade = MVCFacade.getInstance(multitonKey);
   //Create a proxy to hold the Data
   IProxy proxy = new MVCProxy("TestProxy", dataObject);
+  
   //Register the proxy
   facade.registerProxy(proxy);
+ 
   //Retireve proxy
   IProxy retirevedProxy = facade.retrieveProxy("TestProxy");
   //Get Data
